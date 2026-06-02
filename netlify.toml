@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/api/repair-news"
+  to = "/.netlify/functions/repair-news"
+  status = 200
+
+[[redirects]]
+  from = "/api/competitor-products"
+  to = "/.netlify/functions/competitor-products"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
