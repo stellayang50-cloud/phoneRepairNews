@@ -20,6 +20,7 @@ import './styles.css';
 
 const profileStorageKey = 'personal-site-profile';
 const newsHistoryStorageKey = 'repair-news-history';
+const newsItemStatesStorageKey = 'repair-news-item-states';
 const languageStorageKey = 'site-language';
 
 const translations = {
@@ -55,6 +56,13 @@ const translations = {
     fallbackStories: 'Showing fallback stories',
     viewAllIntelligence: 'View all saved intelligence',
     readSource: 'Read source',
+    favorites: 'My favorite intelligence',
+    noFavorites: 'Liked items will appear here.',
+    collectedAt: 'Collected',
+    viewed: 'Viewed',
+    unread: 'Unread',
+    liked: 'Liked',
+    notLiked: 'Like',
     savedIntelligence: 'Saved intelligence',
     allFetchedNews: 'All fetched repair news',
     archiveDescription: 'Sorted by the time each item was most recently fetched by this site.',
@@ -114,6 +122,13 @@ const translations = {
     fallbackStories: '正在显示备用内容',
     viewAllIntelligence: '查看全部已保存情报',
     readSource: '查看来源',
+    favorites: '我的喜爱资讯',
+    noFavorites: '点赞后的资讯会显示在这里。',
+    collectedAt: '收集时间',
+    viewed: '已浏览',
+    unread: '未浏览',
+    liked: '已点赞',
+    notLiked: '点赞',
     savedIntelligence: '已保存情报',
     allFetchedNews: '全部已抓取维修资讯',
     archiveDescription: '按照本站最近一次抓取到该资讯的时间从新到旧排序。',
@@ -254,6 +269,16 @@ function readStoredNewsHistory() {
   }
 }
 
+function readStoredNewsItemStates() {
+  try {
+    const value = localStorage.getItem(newsItemStatesStorageKey);
+    const parsed = value ? JSON.parse(value) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 function currentPageFromHash() {
   return window.location.hash === '#news' ? 'news' : 'home';
 }
@@ -263,6 +288,7 @@ function App() {
   const [language, setLanguage] = useState(() => localStorage.getItem(languageStorageKey) || 'en');
   const [page, setPage] = useState(currentPageFromHash);
   const [newsHistory, setNewsHistory] = useState(readStoredNewsHistory);
+  const [newsItemStates, setNewsItemStates] = useState(readStoredNewsItemStates);
   const [news, setNews] = useState({ items: fallbackNews, generatedAt: '', status: 'loading' });
   const [competitorBoard, setCompetitorBoard] = useState({
     products: fallbackCompetitorProducts,
@@ -286,6 +312,18 @@ function App() {
 
   useEffect(() => {
     let isCurrent = true;
+
+    fetch('/data/news-history.json')
+      .then((response) => (response.ok ? response.json() : { items: [] }))
+      .then((data) => {
+        if (!isCurrent || !Array.isArray(data.items) || !data.items.length) return;
+        setNewsHistory((current) => {
+          const next = sortNewsHistory(mergeExistingNewsItems(current, data.items)).slice(0, 500);
+          localStorage.setItem(newsHistoryStorageKey, JSON.stringify(next));
+          return next;
+        });
+      })
+      .catch(() => {});
 
     fetch('/api/repair-news')
       .then((response) => {
@@ -320,6 +358,31 @@ function App() {
       isCurrent = false;
     };
   }, []);
+
+  function updateNewsItemState(item, patch) {
+    setNewsItemStates((current) => {
+      const key = newsKey(item);
+      const next = {
+        ...current,
+        [key]: {
+          ...current[key],
+          ...patch,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+      localStorage.setItem(newsItemStatesStorageKey, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function markNewsViewed(item) {
+    updateNewsItemState(item, { viewed: true, viewedAt: new Date().toISOString() });
+  }
+
+  function toggleNewsLiked(item) {
+    const current = newsItemStates[newsKey(item)] ?? {};
+    updateNewsItemState(item, { liked: !current.liked });
+  }
 
   useEffect(() => {
     let isCurrent = true;
@@ -505,7 +568,18 @@ function App() {
       </section>
 
       <section className="preview-pane" aria-label="Live preview">
-        <Portfolio profile={profile} news={news} newsHistory={newsHistory} competitorBoard={competitorBoard} page={page} language={language} onLanguageToggle={toggleLanguage} />
+        <Portfolio
+          profile={profile}
+          news={news}
+          newsHistory={newsHistory}
+          newsItemStates={newsItemStates}
+          competitorBoard={competitorBoard}
+          page={page}
+          language={language}
+          onLanguageToggle={toggleLanguage}
+          onViewed={markNewsViewed}
+          onLiked={toggleNewsLiked}
+        />
       </section>
     </main>
   );
@@ -568,7 +642,7 @@ function ProjectEditor({ project, index, onChange, onRemove, t }) {
   );
 }
 
-function Portfolio({ profile, news, newsHistory, competitorBoard, page, language, onLanguageToggle }) {
+function Portfolio({ profile, news, newsHistory, newsItemStates, competitorBoard, page, language, onLanguageToggle, onViewed, onLiked }) {
   const t = translations[language];
 
   return (
@@ -591,10 +665,10 @@ function Portfolio({ profile, news, newsHistory, competitorBoard, page, language
       </nav>
 
       {page === 'news' ? (
-        <NewsArchive items={newsHistory} currentItems={news.items} t={t} />
+        <NewsArchive items={newsHistory} currentItems={news.items} itemStates={newsItemStates} onViewed={onViewed} onLiked={onLiked} t={t} />
       ) : (
         <>
-          <IndustryNews news={news} historyCount={newsHistory.length} t={t} />
+          <IndustryNews news={news} historyCount={newsHistory.length} itemStates={newsItemStates} onViewed={onViewed} onLiked={onLiked} t={t} />
           <ProfileHero profile={profile} t={t} />
           <CompetitorProductBoard board={competitorBoard} t={t} />
           <WorkSection projects={profile.projects} t={t} />
@@ -641,10 +715,8 @@ function DigitalClock() {
   );
 }
 
-function IndustryNews({ news, historyCount, t }) {
+function IndustryNews({ news, historyCount, itemStates, onViewed, onLiked, t }) {
   const latestItems = news.items?.length ? news.items : fallbackNews;
-  const mainItem = latestItems[0];
-  const sideItems = latestItems.slice(1, 5);
 
   return (
     <section className="industry-news">
@@ -663,36 +735,18 @@ function IndustryNews({ news, historyCount, t }) {
         <a className="archive-link" href="#news">{t.viewAllIntelligence}</a>
       </div>
 
-      <article className="headline-card">
-        <div>
-          <span className="source-pill">{mainItem.region} - {mainItem.source}</span>
-          <h3>{mainItem.title}</h3>
-          <p>{mainItem.summary}</p>
-        </div>
-        <a href={mainItem.link} target="_blank" rel="noreferrer">
-          {t.readSource}
-          <ExternalLink size={16} />
-        </a>
-      </article>
-
       <div className="news-list">
-        {sideItems.map((item) => (
-          <a className="news-row" href={item.link} target="_blank" rel="noreferrer" key={`${item.source}-${item.title}`}>
-            <span>{item.source}</span>
-            <strong>{item.title}</strong>
-            <small>
-              <CalendarDays size={14} />
-              {formatDate(item.lastFetchedAt ?? item.publishedAt)}
-            </small>
-          </a>
+        {latestItems.slice(0, 6).map((item) => (
+          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
         ))}
       </div>
     </section>
   );
 }
 
-function NewsArchive({ items, currentItems, t }) {
+function NewsArchive({ items, currentItems, itemStates, onViewed, onLiked, t }) {
   const archiveItems = items.length ? items : currentItems.map((item) => ({ ...item, firstFetchedAt: '', lastFetchedAt: '' }));
+  const favoriteItems = archiveItems.filter((item) => itemStates[newsKey(item)]?.liked);
 
   return (
     <section className="archive-page">
@@ -705,27 +759,59 @@ function NewsArchive({ items, currentItems, t }) {
         <a className="small-button archive-home" href="#home">{t.backToSite}</a>
       </div>
 
+      <section className="favorites-panel">
+        <div className="archive-subhead">
+          <p className="kicker">{t.favorites}</p>
+          <span>{favoriteItems.length}</span>
+        </div>
+        {favoriteItems.length ? (
+          <div className="archive-list compact">
+            {favoriteItems.map((item) => (
+              <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={`favorite-${newsKey(item)}`} />
+            ))}
+          </div>
+        ) : (
+          <p className="empty-note">{t.noFavorites}</p>
+        )}
+      </section>
+
       <div className="archive-list">
         {archiveItems.map((item) => (
-          <article className="archive-item" key={`${item.source}-${item.link}`}>
-            <div className="archive-meta">
-              <span>{item.source}</span>
-              <span>{item.region}</span>
-              <span>{t.fetched} {formatDateTime(item.lastFetchedAt)}</span>
-            </div>
-            <h2>{item.title}</h2>
-            <p>{item.summary}</p>
-            <div className="archive-actions">
-              <small>{t.published} {formatDate(item.publishedAt)} - {t.firstSaved} {formatDateTime(item.firstFetchedAt)}</small>
-              <a href={item.link} target="_blank" rel="noreferrer">
-                {t.readSource}
-                <ExternalLink size={16} />
-              </a>
-            </div>
-          </article>
+          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
         ))}
       </div>
     </section>
+  );
+}
+
+function NewsListItem({ item, state = {}, onViewed, onLiked, t }) {
+  return (
+    <article className="news-item">
+      <div className="news-item-main">
+        <div className="archive-meta">
+          <span>{item.source}</span>
+          <span>{item.region}</span>
+        </div>
+        <h3>{item.title}</h3>
+        <p>{item.summary}</p>
+      </div>
+      <aside className="news-state-box">
+        <div>
+          <small>{t.collectedAt}</small>
+          <strong>{formatDateTime(item.lastFetchedAt ?? item.generatedAt ?? item.publishedAt)}</strong>
+        </div>
+        <button className={state.viewed ? 'state-button active' : 'state-button'} onClick={() => onViewed(item)}>
+          {state.viewed ? t.viewed : t.unread}
+        </button>
+        <button className={state.liked ? 'state-button liked' : 'state-button'} onClick={() => onLiked(item)}>
+          {state.liked ? t.liked : t.notLiked}
+        </button>
+        <a href={item.link} target="_blank" rel="noreferrer" onClick={() => onViewed(item)}>
+          {t.readSource}
+          <ExternalLink size={14} />
+        </a>
+      </aside>
+    </article>
   );
 }
 
@@ -860,6 +946,22 @@ function mergeNewsHistory(current, items, fetchedAt) {
   }
 
   return sortNewsHistory([...byKey.values()]).slice(0, 250);
+}
+
+function mergeExistingNewsItems(current, items) {
+  const byKey = new Map(current.map((item) => [newsKey(item), item]));
+
+  for (const item of items) {
+    const existing = byKey.get(newsKey(item));
+    byKey.set(newsKey(item), {
+      ...existing,
+      ...item,
+      firstFetchedAt: existing?.firstFetchedAt ?? item.firstFetchedAt ?? item.lastFetchedAt,
+      lastFetchedAt: item.lastFetchedAt ?? existing?.lastFetchedAt,
+    });
+  }
+
+  return [...byKey.values()];
 }
 
 function newsKey(item) {

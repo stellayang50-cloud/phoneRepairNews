@@ -1,0 +1,43 @@
+name: Daily UK news collection
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Collect latest news at 17:00 UK time
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            node scripts/updateNewsHistory.mjs
+          else
+            node scripts/updateNewsHistory.mjs --only-uk-17
+          fi
+
+      - name: Commit updated news manifest
+        run: |
+          if git diff --quiet public/data/news-history.json; then
+            echo "No news manifest changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/news-history.json
+          git commit -m "Update daily repair news manifest"
+          git push

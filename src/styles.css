@@ -437,9 +437,9 @@ a {
 
 .industry-news {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 18px;
-  padding: 38px;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  padding: 26px 30px;
   border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 88%);
 }
 
@@ -452,16 +452,16 @@ a {
 
 .news-lead h2 {
   margin: 0;
-  font-size: clamp(34px, 4.5vw, 66px);
-  line-height: 1;
+  font-size: clamp(26px, 3vw, 40px);
+  line-height: 1.05;
 }
 
 .news-lead p:not(.kicker) {
   max-width: 560px;
-  margin: 18px 0 0;
+  margin: 12px 0 0;
   color: color-mix(in srgb, var(--ink), transparent 24%);
-  font-size: 18px;
-  line-height: 1.58;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .news-status {
@@ -485,89 +485,94 @@ a {
   background: var(--accent);
 }
 
-.headline-card,
-.news-row {
+.news-item {
   border: 1px solid color-mix(in srgb, var(--ink), transparent 86%);
   border-radius: 8px;
   background: color-mix(in srgb, var(--paper), white 62%);
 }
 
-.headline-card {
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 24px;
+.news-list {
+  display: grid;
+  gap: 8px;
 }
 
-.headline-card h3 {
-  margin: 16px 0 0;
-  font-size: clamp(24px, 3vw, 40px);
-  line-height: 1.05;
+.news-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 12px;
+  padding: 12px;
 }
 
-.headline-card p {
-  margin: 16px 0 0;
-  color: color-mix(in srgb, var(--ink), transparent 30%);
-  line-height: 1.58;
+.news-item-main {
+  min-width: 0;
 }
 
-.headline-card a {
-  display: inline-flex;
-  align-items: center;
+.news-item h3 {
+  margin: 8px 0 6px;
+  font-size: clamp(16px, 1.7vw, 21px);
+  line-height: 1.2;
+}
+
+.news-item p {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink), transparent 34%);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.news-state-box {
+  display: grid;
   gap: 7px;
-  width: fit-content;
-  margin-top: 24px;
-  color: var(--accent);
+  align-content: start;
+  padding: 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink), transparent 95%);
+}
+
+.news-state-box small {
+  display: block;
+  color: color-mix(in srgb, var(--ink), transparent 42%);
+  font-size: 11px;
   font-weight: 900;
 }
 
-.source-pill {
+.news-state-box strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.news-state-box a,
+.state-button {
+  border: 0;
+  min-height: 30px;
   display: inline-flex;
-  width: fit-content;
-  padding: 7px 10px;
-  border-radius: 999px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 9px;
+  border-radius: 8px;
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent), transparent 88%);
+  background: color-mix(in srgb, var(--accent), transparent 89%);
   font-size: 12px;
   font-weight: 900;
+  cursor: pointer;
 }
 
-.news-list {
-  grid-column: 2;
-  display: grid;
-  gap: 10px;
+.state-button.active {
+  color: #28634f;
+  background: #dff5eb;
 }
 
-.news-row {
-  display: grid;
-  grid-template-columns: 110px 1fr auto;
-  gap: 14px;
-  align-items: center;
-  min-height: 68px;
-  padding: 12px 14px;
-}
-
-.news-row span,
-.news-row small {
-  color: color-mix(in srgb, var(--ink), transparent 36%);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.news-row small {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.news-row strong {
-  line-height: 1.35;
+.state-button.liked {
+  color: #9b2859;
+  background: #ffe4ef;
 }
 
 .archive-page {
   min-height: calc(100vh - 74px);
-  padding: 38px;
+  padding: 28px 30px;
 }
 
 .archive-header {
@@ -582,8 +587,8 @@ a {
 .archive-header h1 {
   max-width: 900px;
   margin: 0;
-  font-size: clamp(38px, 5.4vw, 78px);
-  line-height: 0.98;
+  font-size: clamp(30px, 4vw, 54px);
+  line-height: 1;
 }
 
 .archive-header p:not(.kicker) {
@@ -600,17 +605,12 @@ a {
 
 .archive-list {
   display: grid;
-  gap: 14px;
-  margin-top: 22px;
+  gap: 9px;
+  margin-top: 18px;
 }
 
-.archive-item {
-  display: grid;
-  gap: 12px;
-  padding: 20px;
-  border: 1px solid color-mix(in srgb, var(--ink), transparent 86%);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--paper), white 62%);
+.archive-list.compact {
+  margin-top: 10px;
 }
 
 .archive-meta,
@@ -638,19 +638,6 @@ a {
   font-weight: 900;
 }
 
-.archive-item h2 {
-  margin: 0;
-  font-size: clamp(22px, 2.6vw, 34px);
-  line-height: 1.08;
-}
-
-.archive-item p {
-  max-width: 960px;
-  margin: 0;
-  color: color-mix(in srgb, var(--ink), transparent 30%);
-  line-height: 1.6;
-}
-
 .archive-actions small {
   color: color-mix(in srgb, var(--ink), transparent 38%);
   font-weight: 800;
@@ -662,6 +649,39 @@ a {
   gap: 7px;
   color: var(--accent);
   font-weight: 900;
+}
+
+.favorites-panel {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink), transparent 88%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper), white 42%);
+}
+
+.archive-subhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.archive-subhead span {
+  min-width: 32px;
+  min-height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: white;
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.empty-note {
+  margin: 8px 0 0;
+  color: color-mix(in srgb, var(--ink), transparent 38%);
+  font-size: 13px;
 }
 
 .competitor-section {
@@ -965,7 +985,7 @@ a {
     min-width: 44px;
   }
 
-  .news-row {
+  .news-item {
     grid-template-columns: 1fr;
   }
 
