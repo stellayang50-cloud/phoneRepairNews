@@ -378,14 +378,16 @@ function readStoredAccount() {
 }
 
 function currentPageFromHash() {
-  if (window.location.hash === '#account') return 'account';
-  return window.location.hash === '#news' ? 'news' : 'home';
+  return 'home';
 }
 
 function App() {
   const [profile, setProfile] = useState(readStoredProfile);
   const [account, setAccount] = useState(readStoredAccount);
   const [authForm, setAuthForm] = useState({ displayName: '', email: '', password: '' });
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [accountMenuView, setAccountMenuView] = useState('profile');
+  const [newsPage, setNewsPage] = useState(0);
   const [language, setLanguage] = useState(() => localStorage.getItem(languageStorageKey) || 'en');
   const [page, setPage] = useState(currentPageFromHash);
   const [newsHistory, setNewsHistory] = useState(readStoredNewsHistory);
@@ -598,6 +600,10 @@ function App() {
     localStorage.removeItem(accountStorageKey);
   }
 
+  function toggleAccountMenu() {
+    setAccountMenuOpen((current) => !current);
+  }
+
   function exportHtml() {
     const pageHtml = buildStaticPage(profile, news.items, newsHistory, competitorBoard.products, language);
     const blob = new Blob([pageHtml], { type: 'text/html;charset=utf-8' });
@@ -622,7 +628,13 @@ function App() {
           language={language}
           account={account}
           authForm={authForm}
+          accountMenuOpen={accountMenuOpen}
+          accountMenuView={accountMenuView}
+          newsPage={newsPage}
           onLanguageToggle={toggleLanguage}
+          onAccountToggle={toggleAccountMenu}
+          onAccountView={setAccountMenuView}
+          onNewsPage={setNewsPage}
           onViewed={markNewsViewed}
           onLiked={toggleNewsLiked}
           onAuthField={updateAuthField}
@@ -822,6 +834,94 @@ function AccountPage({
   );
 }
 
+function AccountDropdown({
+  account,
+  authForm,
+  profile,
+  newsHistory,
+  itemStates,
+  view,
+  t,
+  onView,
+  onAuthField,
+  onRegister,
+  onLogin,
+  onLogout,
+  onProfileField,
+  onProfileLink,
+  onProjectChange,
+  onProjectAdd,
+  onProjectRemove,
+  onProfileReset,
+  onExport,
+  onViewed,
+  onLiked,
+}) {
+  const favoriteItems = newsHistory.filter((item) => itemStates[newsKey(item)]?.liked);
+
+  return (
+    <div className="account-dropdown">
+      <div className="account-tabs">
+        <button className={view === 'profile' ? 'active' : ''} onClick={() => onView('profile')}>{t.profileSettings ?? 'Profile'}</button>
+        <button className={view === 'favorites' ? 'active' : ''} onClick={() => onView('favorites')}>{t.favorites}</button>
+      </div>
+
+      {view === 'favorites' ? (
+        <div className="dropdown-favorites">
+          {favoriteItems.length ? favoriteItems.map((item) => (
+            <NewsListItem
+              item={item}
+              state={itemStates[newsKey(item)]}
+              onViewed={onViewed}
+              onLiked={onLiked}
+              t={t}
+              compact
+              key={`account-favorite-${newsKey(item)}`}
+            />
+          )) : <p className="empty-note">{t.noFavorites}</p>}
+        </div>
+      ) : (
+        <div>
+          {!account ? (
+            <div className="auth-panel dropdown-auth">
+              <TextInput label={t.displayName ?? 'Display name'} value={authForm.displayName} onChange={(value) => onAuthField('displayName', value)} />
+              <TextInput label={t.email} value={authForm.email} onChange={(value) => onAuthField('email', value)} />
+              <TextInput label={t.password ?? 'Password'} value={authForm.password} onChange={(value) => onAuthField('password', value)} />
+              <div className="auth-actions">
+                <button className="small-button" onClick={onRegister}>{t.register ?? 'Register'}</button>
+                <button className="small-button secondary" onClick={onLogin}>{t.login ?? 'Login'}</button>
+              </div>
+            </div>
+          ) : (
+            <div className="dropdown-profile">
+              <div className="profile-summary">
+                <strong>{account.displayName || profile.name}</strong>
+                <span>{account.email || profile.email}</span>
+                <button className="small-button secondary" onClick={onLogout}>{t.logout ?? 'Logout'}</button>
+              </div>
+
+              <div className="dropdown-form">
+                <TextInput label={t.name} value={profile.name} onChange={(value) => onProfileField('name', value)} />
+                <TextInput label={t.positioning} value={profile.title} onChange={(value) => onProfileField('title', value)} />
+                <TextInput label={t.email} value={profile.email} onChange={(value) => onProfileField('email', value)} />
+                <label className="field full">
+                  <span>{t.intro}</span>
+                  <textarea value={profile.bio} onChange={(event) => onProfileField('bio', event.target.value)} rows={3} />
+                </label>
+                <TextInput label={t.website} value={profile.links.website} onChange={(value) => onProfileLink('website', value)} />
+                <button className="export-button" onClick={onExport}>
+                  <Download size={18} />
+                  {t.exportStaticPage}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Portfolio({
   profile,
   news,
@@ -832,7 +932,13 @@ function Portfolio({
   language,
   account,
   authForm,
+  accountMenuOpen,
+  accountMenuView,
+  newsPage,
   onLanguageToggle,
+  onAccountToggle,
+  onAccountView,
+  onNewsPage,
   onViewed,
   onLiked,
   onAuthField,
@@ -856,47 +962,50 @@ function Portfolio({
         <a className="brand-link" href="#home">{profile.name}</a>
         <div>
           <button className="nav-language-button" onClick={onLanguageToggle}>{t.switchLanguage}</button>
-          <a href="#news">{t.newsArchive}</a>
-          <a href="#account">{t.account ?? 'Account'}</a>
-          <a href={`mailto:${profile.email}`}>
-            <Mail size={16} />
-            {t.contact}
-          </a>
-          <a href={profile.links.website} target="_blank" rel="noreferrer">
-            <ExternalLink size={16} />
-            {t.website}
-          </a>
+          <div className="account-menu-wrap">
+            <button className="account-menu-button" onClick={onAccountToggle}>{t.account ?? 'Account'}</button>
+            {accountMenuOpen ? (
+              <AccountDropdown
+                account={account}
+                authForm={authForm}
+                profile={profile}
+                newsHistory={newsHistory}
+                itemStates={newsItemStates}
+                view={accountMenuView}
+                t={t}
+                onView={onAccountView}
+                onAuthField={onAuthField}
+                onRegister={onRegister}
+                onLogin={onLogin}
+                onLogout={onLogout}
+                onProfileField={onProfileField}
+                onProfileLink={onProfileLink}
+                onProjectChange={onProjectChange}
+                onProjectAdd={onProjectAdd}
+                onProjectRemove={onProjectRemove}
+                onProfileReset={onProfileReset}
+                onExport={onExport}
+                onViewed={onViewed}
+                onLiked={onLiked}
+              />
+            ) : null}
+          </div>
         </div>
       </nav>
 
-      {page === 'account' ? (
-        <AccountPage
-          account={account}
-          authForm={authForm}
-          profile={profile}
-          t={t}
-          onAuthField={onAuthField}
-          onRegister={onRegister}
-          onLogin={onLogin}
-          onLogout={onLogout}
-          onProfileField={onProfileField}
-          onProfileLink={onProfileLink}
-          onProjectChange={onProjectChange}
-          onProjectAdd={onProjectAdd}
-          onProjectRemove={onProjectRemove}
-          onProfileReset={onProfileReset}
-          onExport={onExport}
-        />
-      ) : page === 'news' ? (
-        <NewsArchive items={newsHistory} currentItems={news.items} itemStates={newsItemStates} onViewed={onViewed} onLiked={onLiked} t={t} />
-      ) : (
-        <>
-          <IndustryNews news={news} historyCount={newsHistory.length} itemStates={newsItemStates} onViewed={onViewed} onLiked={onLiked} t={t} />
-          <ProfileHero profile={profile} t={t} />
-          <CompetitorProductBoard board={competitorBoard} t={t} />
-          <WorkSection projects={profile.projects} t={t} />
-        </>
-      )}
+      <ProfileHero profile={profile} t={t} />
+      <CompetitorProductBoard board={competitorBoard} t={t} />
+      <WorkSection projects={profile.projects} t={t} />
+      <NewsArchive
+        items={newsHistory}
+        currentItems={news.items}
+        itemStates={newsItemStates}
+        page={newsPage}
+        onPage={onNewsPage}
+        onViewed={onViewed}
+        onLiked={onLiked}
+        t={t}
+      />
     </div>
   );
 }
@@ -967,9 +1076,12 @@ function IndustryNews({ news, historyCount, itemStates, onViewed, onLiked, t }) 
   );
 }
 
-function NewsArchive({ items, currentItems, itemStates, onViewed, onLiked, t }) {
+function NewsArchive({ items, currentItems, itemStates, page, onPage, onViewed, onLiked, t }) {
   const archiveItems = items.length ? items : currentItems.map((item) => ({ ...item, firstFetchedAt: '', lastFetchedAt: '' }));
-  const favoriteItems = archiveItems.filter((item) => itemStates[newsKey(item)]?.liked);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(archiveItems.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const visibleItems = archiveItems.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
   return (
     <section className="archive-page">
@@ -981,34 +1093,28 @@ function NewsArchive({ items, currentItems, itemStates, onViewed, onLiked, t }) 
         </div>
       </div>
 
-      <section className="favorites-panel">
-        <div className="archive-subhead">
-          <p className="kicker">{t.favorites}</p>
-          <span>{favoriteItems.length}</span>
-        </div>
-        {favoriteItems.length ? (
-          <div className="archive-list compact">
-            {favoriteItems.map((item) => (
-              <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={`favorite-${newsKey(item)}`} />
-            ))}
-          </div>
-        ) : (
-          <p className="empty-note">{t.noFavorites}</p>
-        )}
-      </section>
-
       <div className="archive-list">
-        {archiveItems.map((item) => (
+        {visibleItems.map((item) => (
           <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
         ))}
       </div>
+
+      {totalPages > 1 ? (
+        <div className="pagination">
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button className={safePage === index ? 'active' : ''} onClick={() => onPage(index)} key={index}>
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function NewsListItem({ item, state = {}, onViewed, onLiked, t }) {
+function NewsListItem({ item, state = {}, onViewed, onLiked, t, compact = false }) {
   return (
-    <article className="news-item">
+    <article className={compact ? 'news-item compact' : 'news-item'}>
       <div className="news-item-main">
         <div className="archive-meta">
           <span>{item.source}</span>
@@ -1269,11 +1375,6 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
     <main class="site-preview">
       <nav class="site-nav">
         <a class="brand-link" href="#home">${text(profile.name)}</a>
-        <div>
-          <a href="#news">News Archive</a>
-          <a href="mailto:${url(profile.email)}">Contact</a>
-          <a href="${url(profile.links.website)}" target="_blank" rel="noreferrer">Website</a>
-        </div>
       </nav>
       <section class="industry-news">
         <div class="news-lead">
@@ -1306,7 +1407,7 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
         <div class="work-grid">${projects}</div>
       </section>
       <section id="news" class="archive-page">
-        <div class="archive-header"><div><p class="kicker">Saved intelligence</p><h1>All fetched repair news</h1><p>Sorted by latest fetch time.</p></div></div>
+        <div class="archive-header"><div><p class="kicker">News list</p><h1>Latest phone repair news</h1></div></div>
         <div class="archive-list">${archiveMarkup}</div>
       </section>
     </main>

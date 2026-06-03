@@ -400,6 +400,97 @@ a {
   gap: 10px;
 }
 
+.account-menu-wrap {
+  position: relative;
+}
+
+.account-menu-button {
+  border: 0;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: white;
+  background: var(--accent);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: min(560px, calc(100vw - 36px));
+  max-height: min(720px, calc(100vh - 130px));
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink), transparent 84%);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 24px 60px rgba(23, 37, 42, 0.2);
+}
+
+.account-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.account-tabs button {
+  border: 0;
+  min-height: 34px;
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--ink), transparent 20%);
+  background: color-mix(in srgb, var(--ink), transparent 94%);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.account-tabs button.active {
+  color: white;
+  background: var(--accent);
+}
+
+.dropdown-favorites,
+.dropdown-form {
+  display: grid;
+  gap: 9px;
+}
+
+.dropdown-favorites .news-item {
+  grid-template-columns: 1fr;
+}
+
+.dropdown-favorites .news-state-box {
+  grid-template-columns: 1fr 1fr;
+}
+
+.dropdown-auth {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.profile-summary {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink), transparent 95%);
+}
+
+.profile-summary span {
+  color: color-mix(in srgb, var(--ink), transparent 35%);
+  font-size: 13px;
+}
+
 .site-nav a,
 .hero-actions a {
   display: inline-flex;
@@ -523,6 +614,14 @@ a {
   overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.news-item.compact h3 {
+  font-size: 14px;
+}
+
+.news-item.compact p {
+  display: none;
 }
 
 .news-state-box {
@@ -668,6 +767,30 @@ a {
   border: 1px solid color-mix(in srgb, var(--ink), transparent 88%);
   border-radius: 8px;
   background: color-mix(in srgb, var(--paper), white 42%);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.pagination button {
+  border: 0;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent), transparent 88%);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pagination button.active {
+  color: white;
+  background: var(--accent);
 }
 
 .archive-subhead {
