@@ -313,7 +313,7 @@ const defaultProfile = {
   background: '#f6f3ee',
   text: '#1c2326',
   avatar: '',
-  heroImage: '',
+  heroImage: '/assets/phone-repair-hero.png',
   links: {
     github: 'https://github.com/',
     website: 'https://example.com',
@@ -1075,12 +1075,13 @@ function NewsListItem({ item, state = {}, onViewed, onLiked, t, compact = false 
           <span>{item.source}</span>
           <span>{item.region}</span>
         </div>
-        <h3>{item.title}</h3>
+        <h3>
+          <a className="news-title-link" href={item.link} target="_blank" rel="noreferrer" onClick={() => onViewed(item)}>
+            {item.title}
+            <ExternalLink size={14} />
+          </a>
+        </h3>
         <p>{item.summary}</p>
-        <a className="inline-source-link" href={item.link} target="_blank" rel="noreferrer" onClick={() => onViewed(item)}>
-          {t.readSource}
-          <ExternalLink size={14} />
-        </a>
       </div>
       <aside className="news-state-box">
         <div>
@@ -1099,6 +1100,8 @@ function NewsListItem({ item, state = {}, onViewed, onLiked, t, compact = false 
 }
 
 function ProfileHero({ profile, t }) {
+  const heroImage = profile.heroImage || defaultProfile.heroImage;
+
   return (
     <header className="hero profile-hero">
       <div className="hero-copy">
@@ -1115,10 +1118,7 @@ function ProfileHero({ profile, t }) {
         </div>
       </div>
       <div className="portrait-wrap">
-        {profile.heroImage ? <img className="hero-photo" src={profile.heroImage} alt="" /> : <div className="photo-placeholder" />}
-        <div className="avatar">
-          {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : <span>{profile.name.slice(0, 1)}</span>}
-        </div>
+        {heroImage ? <img className="hero-photo" src={heroImage} alt="" /> : <div className="photo-placeholder" />}
       </div>
     </header>
   );
@@ -1283,6 +1283,7 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
   const url = (value) => text(value || '#');
   const latestItems = newsItems.length ? newsItems : fallbackNews;
   const archiveItems = newsHistory.length ? newsHistory : latestItems;
+  const heroImage = profile.heroImage || defaultProfile.heroImage;
 
   const projects = profile.projects
     .map(
@@ -1301,7 +1302,7 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
     .slice(0, 5)
     .map((item, index) =>
       index === 0
-        ? `<article class="headline-card"><div><span class="source-pill">${text(item.region)} - ${text(item.source)}</span><h3>${text(item.title)}</h3><p>${text(item.summary)}</p></div><a href="${url(item.link)}" target="_blank" rel="noreferrer">Read source</a></article>`
+        ? `<article class="headline-card"><div><span class="source-pill">${text(item.region)} - ${text(item.source)}</span><h3><a href="${url(item.link)}" target="_blank" rel="noreferrer">${text(item.title)}</a></h3><p>${text(item.summary)}</p></div></article>`
         : `<a class="news-row" href="${url(item.link)}" target="_blank" rel="noreferrer"><span>${text(item.source)}</span><strong>${text(item.title)}</strong><small>${text(formatDate(item.lastFetchedAt ?? item.publishedAt))}</small></a>`,
     )
     .join('');
@@ -1311,9 +1312,9 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
       (item) => `
         <article class="archive-item">
           <div class="archive-meta"><span>${text(item.source)}</span><span>${text(item.region)}</span><span>Fetched ${text(formatDateTime(item.lastFetchedAt))}</span></div>
-          <h2>${text(item.title)}</h2>
+          <h2><a href="${url(item.link)}" target="_blank" rel="noreferrer">${text(item.title)}</a></h2>
           <p>${text(item.summary)}</p>
-          <div class="archive-actions"><small>Published ${text(formatDate(item.publishedAt))}</small><a href="${url(item.link)}" target="_blank" rel="noreferrer">Read source</a></div>
+          <div class="archive-actions"><small>Published ${text(formatDate(item.publishedAt))}</small></div>
         </article>`,
     )
     .join('');
@@ -1353,8 +1354,7 @@ function buildStaticPage(profile, newsItems = fallbackNews, newsHistory = []) {
           </div>
         </div>
         <div class="portrait-wrap">
-          ${profile.heroImage ? `<img class="hero-photo" src="${url(profile.heroImage)}" alt="">` : '<div class="photo-placeholder"></div>'}
-          <div class="avatar">${profile.avatar ? `<img src="${url(profile.avatar)}" alt="${text(profile.name)}">` : `<span>${text(profile.name.slice(0, 1))}</span>`}</div>
+          ${heroImage ? `<img class="hero-photo" src="${url(heroImage)}" alt="">` : '<div class="photo-placeholder"></div>'}
         </div>
       </header>
       <section class="work-section">

@@ -594,6 +594,22 @@ a {
   font-size: 14px;
 }
 
+.news-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+}
+
+.news-title-link:hover {
+  color: var(--accent);
+}
+
+.news-title-link svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
 .news-item.compact p {
   display: none;
 }
@@ -621,7 +637,6 @@ a {
   line-height: 1.25;
 }
 
-.inline-source-link,
 .state-button {
   border: 0;
   min-height: 30px;
@@ -636,12 +651,6 @@ a {
   font-size: 12px;
   font-weight: 900;
   cursor: pointer;
-}
-
-.inline-source-link {
-  width: fit-content;
-  margin-top: 8px;
-  margin-left: auto;
 }
 
 .state-button.active {
