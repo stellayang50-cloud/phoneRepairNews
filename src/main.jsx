@@ -200,7 +200,7 @@ const fallbackNews = [
 ];
 
 const defaultProfile = {
-  name: 'Your Brand',
+  name: 'inexus',
   title: 'UK Phone Repair Specialist',
   location: 'United Kingdom',
   email: 'hello@example.com',
@@ -232,7 +232,13 @@ const defaultProfile = {
 function readStoredProfile() {
   try {
     const value = localStorage.getItem(profileStorageKey);
-    return value ? { ...defaultProfile, ...JSON.parse(value) } : defaultProfile;
+    if (!value) return defaultProfile;
+
+    const storedProfile = { ...defaultProfile, ...JSON.parse(value) };
+    return {
+      ...storedProfile,
+      name: defaultProfile.name,
+    };
   } catch {
     return defaultProfile;
   }
@@ -567,6 +573,7 @@ function Portfolio({ profile, news, newsHistory, competitorBoard, page, language
 
   return (
     <div className="site-preview">
+      <DigitalClock />
       <nav className="site-nav">
         <a className="brand-link" href="#home">{profile.name}</a>
         <div>
@@ -594,6 +601,43 @@ function Portfolio({ profile, news, newsHistory, competitorBoard, page, language
         </>
       )}
     </div>
+  );
+}
+
+function DigitalClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const timeParts = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+  const time = {
+    hour: timeParts.find((part) => part.type === 'hour')?.value ?? '00',
+    minute: timeParts.find((part) => part.type === 'minute')?.value ?? '00',
+    second: timeParts.find((part) => part.type === 'second')?.value ?? '00',
+  };
+
+  return (
+    <section className="digital-clock" aria-label="Live digital clock">
+      <div className="clock-meta">
+        <span>Live market time</span>
+        <strong>{formatDate(now.toISOString())}</strong>
+      </div>
+      <div className="clock-face" aria-live="polite">
+        <span>{time.hour}</span>
+        <b>:</b>
+        <span>{time.minute}</span>
+        <b>:</b>
+        <span className="clock-seconds">{time.second}</span>
+      </div>
+    </section>
   );
 }
 
