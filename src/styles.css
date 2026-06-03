@@ -27,8 +27,6 @@ a {
 
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(360px, 430px) 1fr;
   background: #edf1f1;
 }
 
@@ -307,13 +305,12 @@ a {
 }
 
 .preview-pane {
-  height: 100vh;
-  overflow: auto;
-  padding: 30px;
+  min-height: 100vh;
+  padding: 22px;
 }
 
 .site-preview {
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 44px);
   color: var(--ink);
   background: var(--paper);
   border-radius: 8px;
@@ -437,7 +434,7 @@ a {
 
 .industry-news {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 16px;
   padding: 26px 30px;
   border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 88%);
@@ -498,7 +495,7 @@ a {
 
 .news-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px;
+  grid-template-columns: minmax(0, 1fr) minmax(136px, 170px);
   gap: 12px;
   padding: 12px;
 }
@@ -509,8 +506,12 @@ a {
 
 .news-item h3 {
   margin: 8px 0 6px;
-  font-size: clamp(16px, 1.7vw, 21px);
+  font-size: clamp(15px, 1.45vw, 18px);
   line-height: 1.2;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .news-item p {
@@ -518,6 +519,10 @@ a {
   color: color-mix(in srgb, var(--ink), transparent 34%);
   font-size: 13px;
   line-height: 1.45;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .news-state-box {
@@ -543,7 +548,7 @@ a {
   line-height: 1.25;
 }
 
-.news-state-box a,
+.inline-source-link,
 .state-button {
   border: 0;
   min-height: 30px;
@@ -558,6 +563,12 @@ a {
   font-size: 12px;
   font-weight: 900;
   cursor: pointer;
+}
+
+.inline-source-link {
+  width: fit-content;
+  margin-top: 8px;
+  margin-left: auto;
 }
 
 .state-button.active {
@@ -682,6 +693,68 @@ a {
   margin: 8px 0 0;
   color: color-mix(in srgb, var(--ink), transparent 38%);
   font-size: 13px;
+}
+
+.account-page {
+  min-height: calc(100vh - 74px);
+  padding: 28px 30px 42px;
+}
+
+.account-header,
+.profile-settings-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.account-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink), transparent 88%);
+}
+
+.account-header h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 54px);
+  line-height: 1;
+}
+
+.account-header p:not(.kicker) {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: color-mix(in srgb, var(--ink), transparent 30%);
+  line-height: 1.55;
+}
+
+.auth-panel,
+.profile-settings {
+  max-width: 980px;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--ink), transparent 86%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper), white 62%);
+}
+
+.auth-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.small-button.secondary {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent), transparent 88%);
+}
+
+.profile-settings-title h2 {
+  margin: 0;
+  font-size: 24px;
 }
 
 .competitor-section {
@@ -971,6 +1044,7 @@ a {
   .hero,
   .work-section,
   .industry-news,
+  .account-page,
   .competitor-section {
     padding-left: 18px;
     padding-right: 18px;

@@ -22,6 +22,7 @@ const profileStorageKey = 'personal-site-profile';
 const newsHistoryStorageKey = 'repair-news-history';
 const newsItemStatesStorageKey = 'repair-news-item-states';
 const languageStorageKey = 'site-language';
+const accountStorageKey = 'site-account';
 
 const translations = {
   en: {
@@ -56,16 +57,25 @@ const translations = {
     fallbackStories: 'Showing fallback stories',
     viewAllIntelligence: 'View all saved intelligence',
     readSource: 'Read source',
-    favorites: 'My favorite intelligence',
-    noFavorites: 'Liked items will appear here.',
+    account: 'Account',
+    accountTitle: 'Account and profile',
+    register: 'Register',
+    login: 'Login',
+    logout: 'Logout',
+    password: 'Password',
+    displayName: 'Display name',
+    authHint: 'Create a local site account to manage profile content and saved intelligence.',
+    profileSettings: 'Profile settings',
+    favorites: 'Saved news',
+    noFavorites: 'Saved items will appear here.',
     collectedAt: 'Collected',
     viewed: 'Viewed',
     unread: 'Unread',
-    liked: 'Liked',
-    notLiked: 'Like',
-    savedIntelligence: 'Saved intelligence',
-    allFetchedNews: 'All fetched repair news',
-    archiveDescription: 'Sorted by the time each item was most recently fetched by this site.',
+    liked: 'Saved',
+    notLiked: 'Save',
+    savedIntelligence: 'News list',
+    allFetchedNews: 'Latest phone repair news',
+    archiveDescription: '',
     backToSite: 'Back to site',
     fetched: 'Fetched',
     published: 'Published',
@@ -157,6 +167,84 @@ const translations = {
     emailAction: '发邮件',
   },
 };
+
+const zhOverrides = {
+  languageLabel: '中文',
+  switchLanguage: 'English',
+  editorTitle: '网站工作台',
+  name: '名称',
+  positioning: '定位',
+  location: '地区',
+  email: '邮箱',
+  intro: '简介',
+  avatar: '头像',
+  heroImage: '首页图片',
+  visualStyle: '视觉风格',
+  accent: '强调色',
+  background: '背景',
+  text: '文字',
+  links: '链接',
+  website: '网站',
+  services: '服务',
+  add: '添加',
+  exportStaticPage: '导出静态页面',
+  newsArchive: '资讯归档',
+  contact: '联系',
+  account: '账号',
+  accountTitle: '账号与个人资料',
+  register: '注册',
+  login: '登录',
+  logout: '退出登录',
+  password: '密码',
+  displayName: '显示名称',
+  authHint: '创建本地网站账号，用来管理个人资料和已收藏资讯。',
+  profileSettings: '个人资料设置',
+  marketKicker: 'DIY 零件市场雷达',
+  marketTitle: '同行维修与零售零件情报',
+  marketDescription:
+    '自动聚合同业维修视频、维修博客、手机硬件新闻，以及 iPhone、Samsung、Pixel、Huawei、Xiaomi 零件、工具和 DIY 维修套装的需求信号。',
+  latestFetchSaved: '最新抓取已保存。',
+  archivedItems: '条归档资讯。',
+  syncingSources: '正在同步来源...',
+  fallbackStories: '正在显示备用内容',
+  viewAllIntelligence: '查看全部资讯',
+  readSource: '查看来源',
+  favorites: '已收藏资讯',
+  noFavorites: '收藏后的资讯会显示在这里。',
+  collectedAt: '收集时间',
+  viewed: '已浏览',
+  unread: '未浏览',
+  liked: '已收藏',
+  notLiked: '收藏',
+  savedIntelligence: '资讯清单',
+  allFetchedNews: '手机维修最新资讯',
+  archiveDescription: '',
+  fetched: '抓取',
+  published: '发布',
+  firstSaved: '首次保存',
+  competitorKicker: '竞品产品表',
+  competitorTitle: '共享产品与价格表',
+  competitorDescription: '按品牌追踪竞品产品页面。可公开抓取时显示产品和价格；被拦截页面保留为人工查看链接。',
+  usingFallbackCompetitors: '正在使用备用竞品链接',
+  brand: '品牌',
+  competitor: '竞品',
+  product: '产品',
+  price: '价格',
+  status: '状态',
+  link: '链接',
+  open: '打开',
+  repairCapability: '维修能力',
+  servicesAndCases: '服务与案例',
+  item: '项目',
+  title: '标题',
+  description: '描述',
+  image: '图片',
+  emailAction: '发邮件',
+};
+
+function getTranslations(language) {
+  return language === 'zh' ? { ...translations.en, ...zhOverrides } : translations.en;
+}
 
 const fallbackCompetitorProducts = [
   {
@@ -279,12 +367,25 @@ function readStoredNewsItemStates() {
   }
 }
 
+function readStoredAccount() {
+  try {
+    const value = localStorage.getItem(accountStorageKey);
+    const parsed = value ? JSON.parse(value) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 function currentPageFromHash() {
+  if (window.location.hash === '#account') return 'account';
   return window.location.hash === '#news' ? 'news' : 'home';
 }
 
 function App() {
   const [profile, setProfile] = useState(readStoredProfile);
+  const [account, setAccount] = useState(readStoredAccount);
+  const [authForm, setAuthForm] = useState({ displayName: '', email: '', password: '' });
   const [language, setLanguage] = useState(() => localStorage.getItem(languageStorageKey) || 'en');
   const [page, setPage] = useState(currentPageFromHash);
   const [newsHistory, setNewsHistory] = useState(readStoredNewsHistory);
@@ -303,6 +404,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem(languageStorageKey, language);
   }, [language]);
+
+  useEffect(() => {
+    if (account) {
+      localStorage.setItem(accountStorageKey, JSON.stringify(account));
+    }
+  }, [account]);
 
   useEffect(() => {
     const handleHashChange = () => setPage(currentPageFromHash());
@@ -464,6 +571,33 @@ function App() {
     setLanguage((current) => (current === 'en' ? 'zh' : 'en'));
   }
 
+  function updateAuthField(field, value) {
+    setAuthForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function registerAccount() {
+    const nextAccount = {
+      displayName: authForm.displayName || profile.name,
+      email: authForm.email,
+      createdAt: new Date().toISOString(),
+    };
+    setAccount(nextAccount);
+  }
+
+  function loginAccount() {
+    const stored = readStoredAccount();
+    setAccount(stored ?? {
+      displayName: authForm.displayName || profile.name,
+      email: authForm.email,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  function logoutAccount() {
+    setAccount(null);
+    localStorage.removeItem(accountStorageKey);
+  }
+
   function exportHtml() {
     const pageHtml = buildStaticPage(profile, news.items, newsHistory, competitorBoard.products, language);
     const blob = new Blob([pageHtml], { type: 'text/html;charset=utf-8' });
@@ -477,96 +611,6 @@ function App() {
 
   return (
     <main className="app-shell" style={cssVars}>
-      <section className="editor-pane" aria-label="Website editor">
-        <div className="editor-header">
-          <div>
-            <p className="eyebrow">Live editor</p>
-            <h1>{translations[language].editorTitle}</h1>
-          </div>
-          <div className="editor-actions">
-            <button className="language-button" onClick={toggleLanguage}>
-              {translations[language].switchLanguage}
-            </button>
-            <button className="icon-button" onClick={resetProfile} aria-label="Reset">
-              <RotateCcw size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="field-grid">
-          <TextInput label={translations[language].name} value={profile.name} onChange={(value) => updateField('name', value)} />
-          <TextInput label={translations[language].positioning} value={profile.title} onChange={(value) => updateField('title', value)} />
-          <TextInput label={translations[language].location} value={profile.location} onChange={(value) => updateField('location', value)} />
-          <TextInput label={translations[language].email} value={profile.email} onChange={(value) => updateField('email', value)} />
-        </div>
-
-        <label className="field full">
-          <span>{translations[language].intro}</span>
-          <textarea value={profile.bio} onChange={(event) => updateField('bio', event.target.value)} rows={5} />
-        </label>
-
-        <div className="upload-row">
-          <ImageUpload icon={<Camera size={18} />} label={translations[language].avatar} image={profile.avatar} onImage={(value) => updateField('avatar', value)} />
-          <ImageUpload
-            icon={<ImagePlus size={18} />}
-            label={translations[language].heroImage}
-            image={profile.heroImage}
-            onImage={(value) => updateField('heroImage', value)}
-          />
-        </div>
-
-        <section className="control-section">
-          <div className="section-title">
-            <Palette size={18} />
-            <h2>{translations[language].visualStyle}</h2>
-          </div>
-          <div className="color-grid">
-            <ColorInput label={translations[language].accent} value={profile.accent} onChange={(value) => updateField('accent', value)} />
-            <ColorInput label={translations[language].background} value={profile.background} onChange={(value) => updateField('background', value)} />
-            <ColorInput label={translations[language].text} value={profile.text} onChange={(value) => updateField('text', value)} />
-          </div>
-        </section>
-
-        <section className="control-section">
-          <div className="section-title">
-            <LinkIcon size={18} />
-            <h2>{translations[language].links}</h2>
-          </div>
-          <TextInput label="GitHub" value={profile.links.github} onChange={(value) => updateLink('github', value)} />
-          <TextInput label={translations[language].website} value={profile.links.website} onChange={(value) => updateLink('website', value)} />
-        </section>
-
-        <section className="control-section">
-          <div className="section-title split">
-            <div>
-              <Sparkles size={18} />
-              <h2>{translations[language].services}</h2>
-            </div>
-            <button className="small-button" onClick={addProject}>
-              <Plus size={16} />
-              {translations[language].add}
-            </button>
-          </div>
-          <div className="project-editor-list">
-            {profile.projects.map((project, index) => (
-              <ProjectEditor
-                key={`${project.title}-${index}`}
-                project={project}
-                index={index}
-                onChange={updateProject}
-                onRemove={removeProject}
-                t={translations[language]}
-              />
-            ))}
-          </div>
-        </section>
-
-        <button className="export-button" onClick={exportHtml}>
-          <Download size={18} />
-          {translations[language].exportStaticPage}
-        </button>
-      </section>
-
       <section className="preview-pane" aria-label="Live preview">
         <Portfolio
           profile={profile}
@@ -576,9 +620,22 @@ function App() {
           competitorBoard={competitorBoard}
           page={page}
           language={language}
+          account={account}
+          authForm={authForm}
           onLanguageToggle={toggleLanguage}
           onViewed={markNewsViewed}
           onLiked={toggleNewsLiked}
+          onAuthField={updateAuthField}
+          onRegister={registerAccount}
+          onLogin={loginAccount}
+          onLogout={logoutAccount}
+          onProfileField={updateField}
+          onProfileLink={updateLink}
+          onProjectChange={updateProject}
+          onProjectAdd={addProject}
+          onProjectRemove={removeProject}
+          onProfileReset={resetProfile}
+          onExport={exportHtml}
         />
       </section>
     </main>
@@ -642,8 +699,155 @@ function ProjectEditor({ project, index, onChange, onRemove, t }) {
   );
 }
 
-function Portfolio({ profile, news, newsHistory, newsItemStates, competitorBoard, page, language, onLanguageToggle, onViewed, onLiked }) {
-  const t = translations[language];
+function AccountPage({
+  account,
+  authForm,
+  profile,
+  t,
+  onAuthField,
+  onRegister,
+  onLogin,
+  onLogout,
+  onProfileField,
+  onProfileLink,
+  onProjectChange,
+  onProjectAdd,
+  onProjectRemove,
+  onProfileReset,
+  onExport,
+}) {
+  return (
+    <section className="account-page">
+      <div className="account-header">
+        <div>
+          <p className="kicker">{t.account ?? 'Account'}</p>
+          <h1>{t.accountTitle ?? 'Account and profile'}</h1>
+          <p>{t.authHint ?? 'Create a local site account to manage profile content.'}</p>
+        </div>
+        {account ? <button className="small-button" onClick={onLogout}>{t.logout ?? 'Logout'}</button> : null}
+      </div>
+
+      {!account ? (
+        <div className="auth-panel">
+          <TextInput label={t.displayName ?? 'Display name'} value={authForm.displayName} onChange={(value) => onAuthField('displayName', value)} />
+          <TextInput label={t.email} value={authForm.email} onChange={(value) => onAuthField('email', value)} />
+          <TextInput label={t.password ?? 'Password'} value={authForm.password} onChange={(value) => onAuthField('password', value)} />
+          <div className="auth-actions">
+            <button className="export-button" onClick={onRegister}>{t.register ?? 'Register'}</button>
+            <button className="small-button secondary" onClick={onLogin}>{t.login ?? 'Login'}</button>
+          </div>
+        </div>
+      ) : (
+        <div className="profile-settings">
+          <div className="profile-settings-title">
+            <div>
+              <p className="kicker">{account.displayName || account.email}</p>
+              <h2>{t.profileSettings ?? 'Profile settings'}</h2>
+            </div>
+            <button className="icon-button" onClick={onProfileReset} aria-label="Reset profile">
+              <RotateCcw size={18} />
+            </button>
+          </div>
+
+          <div className="field-grid">
+            <TextInput label={t.name} value={profile.name} onChange={(value) => onProfileField('name', value)} />
+            <TextInput label={t.positioning} value={profile.title} onChange={(value) => onProfileField('title', value)} />
+            <TextInput label={t.location} value={profile.location} onChange={(value) => onProfileField('location', value)} />
+            <TextInput label={t.email} value={profile.email} onChange={(value) => onProfileField('email', value)} />
+          </div>
+
+          <label className="field full">
+            <span>{t.intro}</span>
+            <textarea value={profile.bio} onChange={(event) => onProfileField('bio', event.target.value)} rows={4} />
+          </label>
+
+          <div className="upload-row">
+            <ImageUpload icon={<Camera size={18} />} label={t.avatar} image={profile.avatar} onImage={(value) => onProfileField('avatar', value)} />
+            <ImageUpload icon={<ImagePlus size={18} />} label={t.heroImage} image={profile.heroImage} onImage={(value) => onProfileField('heroImage', value)} />
+          </div>
+
+          <section className="control-section">
+            <div className="section-title">
+              <Palette size={18} />
+              <h2>{t.visualStyle}</h2>
+            </div>
+            <div className="color-grid">
+              <ColorInput label={t.accent} value={profile.accent} onChange={(value) => onProfileField('accent', value)} />
+              <ColorInput label={t.background} value={profile.background} onChange={(value) => onProfileField('background', value)} />
+              <ColorInput label={t.text} value={profile.text} onChange={(value) => onProfileField('text', value)} />
+            </div>
+          </section>
+
+          <section className="control-section">
+            <div className="section-title">
+              <LinkIcon size={18} />
+              <h2>{t.links}</h2>
+            </div>
+            <TextInput label="GitHub" value={profile.links.github} onChange={(value) => onProfileLink('github', value)} />
+            <TextInput label={t.website} value={profile.links.website} onChange={(value) => onProfileLink('website', value)} />
+          </section>
+
+          <section className="control-section">
+            <div className="section-title split">
+              <div>
+                <Sparkles size={18} />
+                <h2>{t.services}</h2>
+              </div>
+              <button className="small-button" onClick={onProjectAdd}>
+                <Plus size={16} />
+                {t.add}
+              </button>
+            </div>
+            <div className="project-editor-list">
+              {profile.projects.map((project, index) => (
+                <ProjectEditor
+                  key={`${project.title}-${index}`}
+                  project={project}
+                  index={index}
+                  onChange={onProjectChange}
+                  onRemove={onProjectRemove}
+                  t={t}
+                />
+              ))}
+            </div>
+          </section>
+
+          <button className="export-button" onClick={onExport}>
+            <Download size={18} />
+            {t.exportStaticPage}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Portfolio({
+  profile,
+  news,
+  newsHistory,
+  newsItemStates,
+  competitorBoard,
+  page,
+  language,
+  account,
+  authForm,
+  onLanguageToggle,
+  onViewed,
+  onLiked,
+  onAuthField,
+  onRegister,
+  onLogin,
+  onLogout,
+  onProfileField,
+  onProfileLink,
+  onProjectChange,
+  onProjectAdd,
+  onProjectRemove,
+  onProfileReset,
+  onExport,
+}) {
+  const t = getTranslations(language);
 
   return (
     <div className="site-preview">
@@ -653,6 +857,7 @@ function Portfolio({ profile, news, newsHistory, newsItemStates, competitorBoard
         <div>
           <button className="nav-language-button" onClick={onLanguageToggle}>{t.switchLanguage}</button>
           <a href="#news">{t.newsArchive}</a>
+          <a href="#account">{t.account ?? 'Account'}</a>
           <a href={`mailto:${profile.email}`}>
             <Mail size={16} />
             {t.contact}
@@ -664,7 +869,25 @@ function Portfolio({ profile, news, newsHistory, newsItemStates, competitorBoard
         </div>
       </nav>
 
-      {page === 'news' ? (
+      {page === 'account' ? (
+        <AccountPage
+          account={account}
+          authForm={authForm}
+          profile={profile}
+          t={t}
+          onAuthField={onAuthField}
+          onRegister={onRegister}
+          onLogin={onLogin}
+          onLogout={onLogout}
+          onProfileField={onProfileField}
+          onProfileLink={onProfileLink}
+          onProjectChange={onProjectChange}
+          onProjectAdd={onProjectAdd}
+          onProjectRemove={onProjectRemove}
+          onProfileReset={onProfileReset}
+          onExport={onExport}
+        />
+      ) : page === 'news' ? (
         <NewsArchive items={newsHistory} currentItems={news.items} itemStates={newsItemStates} onViewed={onViewed} onLiked={onLiked} t={t} />
       ) : (
         <>
@@ -754,9 +977,8 @@ function NewsArchive({ items, currentItems, itemStates, onViewed, onLiked, t }) 
         <div>
           <p className="kicker">{t.savedIntelligence}</p>
           <h1>{t.allFetchedNews}</h1>
-          <p>{t.archiveDescription}</p>
+          {t.archiveDescription ? <p>{t.archiveDescription}</p> : null}
         </div>
-        <a className="small-button archive-home" href="#home">{t.backToSite}</a>
       </div>
 
       <section className="favorites-panel">
@@ -794,6 +1016,10 @@ function NewsListItem({ item, state = {}, onViewed, onLiked, t }) {
         </div>
         <h3>{item.title}</h3>
         <p>{item.summary}</p>
+        <a className="inline-source-link" href={item.link} target="_blank" rel="noreferrer" onClick={() => onViewed(item)}>
+          {t.readSource}
+          <ExternalLink size={14} />
+        </a>
       </div>
       <aside className="news-state-box">
         <div>
@@ -806,10 +1032,6 @@ function NewsListItem({ item, state = {}, onViewed, onLiked, t }) {
         <button className={state.liked ? 'state-button liked' : 'state-button'} onClick={() => onLiked(item)}>
           {state.liked ? t.liked : t.notLiked}
         </button>
-        <a href={item.link} target="_blank" rel="noreferrer" onClick={() => onViewed(item)}>
-          {t.readSource}
-          <ExternalLink size={14} />
-        </a>
       </aside>
     </article>
   );
