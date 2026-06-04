@@ -4,6 +4,7 @@ import { fetchCompetitorProducts } from './lib/competitorProducts.mjs';
 import { fetchRepairNews } from './lib/repairNews.mjs';
 //添加注释
 //测试本机
+//2222
 export default defineConfig({
   plugins: [
     react(),
