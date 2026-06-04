@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { fetchCompetitorProducts } from './lib/competitorProducts.mjs';
 import { fetchRepairNews } from './lib/repairNews.mjs';
-
+//添加注释
 export default defineConfig({
   plugins: [
     react(),
