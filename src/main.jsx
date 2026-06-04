@@ -24,6 +24,46 @@ const newsItemStatesStorageKey = 'repair-news-item-states';
 const languageStorageKey = 'site-language';
 const accountStorageKey = 'site-account';
 
+const siteNavItems = [
+  { href: '#home', label: 'Home' },
+  { href: '#news', label: 'News library' },
+  { href: '#pricing', label: 'Competitor prices' },
+  { href: '#tools', label: 'DIY tools' },
+  { href: '#about', label: 'About inexus' },
+];
+
+const newsTopics = [
+  { id: 'all', label: 'All intelligence', hint: 'Latest collected repair market updates' },
+  { id: 'iphone', label: 'iPhone repair', hint: 'Screens, batteries, parts demand, and Apple repair signals' },
+  { id: 'samsung', label: 'Samsung repair', hint: 'Galaxy repair parts, displays, and service trends' },
+  { id: 'pixel', label: 'Google Pixel', hint: 'Pixel parts, software issues, and repair topics' },
+  { id: 'tools', label: 'DIY tools', hint: 'Tool kits, fixtures, adhesives, and repair workflow tips' },
+  { id: 'peer', label: 'Peer activity', hint: 'Repair brands, blogs, channels, and competitor signals' },
+];
+
+const toolRecommendations = [
+  {
+    title: 'iPhone battery replacement starter kit',
+    audience: 'Best for first-time DIY customers replacing worn batteries.',
+    items: 'Pentalobe driver, tri-point driver, suction cup, opening picks, adhesive strips, anti-static mat.',
+  },
+  {
+    title: 'Screen repair essentials',
+    audience: 'Best for customers replacing cracked OLED/LCD assemblies.',
+    items: 'Precision screwdriver set, spudger, tweezers, heating pad, dust stickers, pre-cut display adhesive.',
+  },
+  {
+    title: 'Charging port and small-parts bench kit',
+    audience: 'Best for repeat DIY users handling ports, cameras, buttons, and brackets.',
+    items: 'Magnetic project mat, screw organiser, curved tweezers, nylon probes, isopropyl wipes, magnifier.',
+  },
+  {
+    title: 'Safe diagnostics add-on bundle',
+    audience: 'Best for retail buyers who want to test before ordering parts.',
+    items: 'USB power meter, battery tester, ESD strap, SIM tool, soft brush, compressed air alternative.',
+  },
+];
+
 const translations = {
   en: {
     languageLabel: 'English',
@@ -378,8 +418,13 @@ function readStoredAccount() {
 }
 
 function currentPageFromHash() {
-  if (window.location.hash === '#account') return 'account';
-  if (window.location.hash === '#favorites') return 'favorites';
+  const hash = window.location.hash || '#home';
+  if (hash.startsWith('#account')) return 'account';
+  if (hash.startsWith('#favorites')) return 'favorites';
+  if (hash.startsWith('#news')) return 'news';
+  if (hash.startsWith('#pricing')) return 'pricing';
+  if (hash.startsWith('#tools')) return 'tools';
+  if (hash.startsWith('#about')) return 'about';
   return 'home';
 }
 
@@ -905,7 +950,14 @@ function Portfolio({
       <DigitalClock />
       <nav className="site-nav">
         <a className="brand-link" href="#home">{profile.name}</a>
-        <div>
+        <div className="nav-links">
+          {siteNavItems.map((item) => (
+            <a className={page === item.href.slice(1) ? 'active' : ''} href={item.href} key={item.href}>
+              {item.label}
+            </a>
+          ))}
+        </div>
+        <div className="nav-actions">
           <button className="nav-language-button" onClick={onLanguageToggle}>{t.switchLanguage}</button>
           <div className="account-menu-wrap">
             <button className="account-menu-button" onClick={onAccountToggle}>{t.account ?? 'Account'}</button>
@@ -944,17 +996,30 @@ function Portfolio({
           onLiked={onLiked}
           t={t}
         />
+      ) : page === 'news' ? (
+        <NewsArchive
+          items={newsHistory}
+          currentItems={news.items}
+          itemStates={newsItemStates}
+          page={newsPage}
+          onPage={onNewsPage}
+          onViewed={onViewed}
+          onLiked={onLiked}
+          t={t}
+        />
+      ) : page === 'pricing' ? (
+        <CompetitorProductBoard board={competitorBoard} t={t} />
+      ) : page === 'tools' ? (
+        <ToolsPage />
+      ) : page === 'about' ? (
+        <AboutPage profile={profile} projects={profile.projects} t={t} />
       ) : (
         <>
           <ProfileHero profile={profile} t={t} />
-          <CompetitorProductBoard board={competitorBoard} t={t} />
-          <WorkSection projects={profile.projects} t={t} />
-          <NewsArchive
-            items={newsHistory}
-            currentItems={news.items}
+          <HomeTopics />
+          <HomeLatestNews
+            items={newsHistory.length ? newsHistory : news.items}
             itemStates={newsItemStates}
-            page={newsPage}
-            onPage={onNewsPage}
             onViewed={onViewed}
             onLiked={onLiked}
             t={t}
@@ -1002,41 +1067,102 @@ function DigitalClock() {
   );
 }
 
-function IndustryNews({ news, historyCount, itemStates, onViewed, onLiked, t }) {
-  const latestItems = news.items?.length ? news.items : fallbackNews;
-
+function HomeTopics() {
   return (
-    <section className="industry-news">
-      <div className="news-lead">
-        <p className="kicker">{t.marketKicker}</p>
-        <h2>{t.marketTitle}</h2>
-        <p>{t.marketDescription}</p>
-        <div className="news-status">
-          <span className={news.status === 'fresh' ? 'status-dot fresh' : 'status-dot'} />
-          {news.status === 'fresh'
-            ? `${t.latestFetchSaved} ${historyCount} ${t.archivedItems}`
-            : news.status === 'loading'
-              ? t.syncingSources
-              : t.fallbackStories}
-        </div>
-        <a className="archive-link" href="#news">{t.viewAllIntelligence}</a>
+    <section className="topic-section">
+      <div className="section-heading">
+        <p className="kicker">Start by topic</p>
+        <h2>Repair intelligence built around your market</h2>
       </div>
-
-      <div className="news-list">
-        {latestItems.slice(0, 6).map((item) => (
-          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
+      <div className="topic-grid">
+        {newsTopics.slice(1).map((topic) => (
+          <a className="topic-card" href={`#news?topic=${topic.id}`} key={topic.id}>
+            <span>{topic.label}</span>
+            <p>{topic.hint}</p>
+          </a>
         ))}
       </div>
     </section>
   );
 }
 
+function HomeLatestNews({ items, itemStates, onViewed, onLiked, t }) {
+  const latestItems = items?.length ? items : fallbackNews;
+
+  return (
+    <section className="home-news-section">
+      <div className="section-heading split">
+        <div>
+          <p className="kicker">Latest collected intelligence</p>
+          <h2>Fresh phone repair signals</h2>
+        </div>
+        <a className="section-link" href="#news">Open news library</a>
+      </div>
+      <div className="archive-list">
+        {latestItems.slice(0, 5).map((item) => (
+          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={`home-${newsKey(item)}`} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ToolsPage() {
+  return (
+    <section className="tools-page">
+      <div className="archive-header">
+        <div>
+          <p className="kicker">DIY repair tools</p>
+          <h1>Recommended kits for retail repair customers</h1>
+          <p>Position parts and tools as complete jobs customers can understand: battery replacement, screen repair, small-parts work, and basic diagnostics.</p>
+        </div>
+      </div>
+      <div className="tool-grid">
+        {toolRecommendations.map((tool) => (
+          <article className="tool-card" key={tool.title}>
+            <span>Kit</span>
+            <h2>{tool.title}</h2>
+            <p>{tool.audience}</p>
+            <strong>{tool.items}</strong>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AboutPage({ profile, projects, t }) {
+  return (
+    <section className="about-page">
+      <div className="about-intro">
+        <p className="kicker">{profile.location}</p>
+        <h1>About {profile.name}</h1>
+        <p>{profile.bio}</p>
+        <div className="about-points">
+          <span>UK-focused repair intelligence</span>
+          <span>DIY parts and tool-kit positioning</span>
+          <span>Peer and competitor market monitoring</span>
+        </div>
+      </div>
+      <WorkSection projects={projects} t={t} />
+    </section>
+  );
+}
+
 function NewsArchive({ items, currentItems, itemStates, page, onPage, onViewed, onLiked, t }) {
   const archiveItems = items.length ? items : currentItems.map((item) => ({ ...item, firstFetchedAt: '', lastFetchedAt: '' }));
+  const [topic, setTopic] = useState(() => new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('topic') ?? 'all');
+  const filteredItems = topic === 'all' ? archiveItems : archiveItems.filter((item) => getNewsTopicIds(item).includes(topic));
   const pageSize = 10;
-  const totalPages = Math.max(1, Math.ceil(archiveItems.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
-  const visibleItems = archiveItems.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const visibleItems = filteredItems.slice(safePage * pageSize, safePage * pageSize + pageSize);
+
+  const handleTopic = (topicId) => {
+    setTopic(topicId);
+    onPage(0);
+    window.history.replaceState(null, '', topicId === 'all' ? '#news' : `#news?topic=${topicId}`);
+  };
 
   return (
     <section className="archive-page">
@@ -1048,10 +1174,19 @@ function NewsArchive({ items, currentItems, itemStates, page, onPage, onViewed, 
         </div>
       </div>
 
-      <div className="archive-list">
-        {visibleItems.map((item) => (
-          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
+      <div className="topic-filter" aria-label="News topic filters">
+        {newsTopics.map((filter) => (
+          <button className={topic === filter.id ? 'active' : ''} onClick={() => handleTopic(filter.id)} key={filter.id}>
+            <span>{filter.label}</span>
+            <small>{filter.id === 'all' ? archiveItems.length : archiveItems.filter((item) => getNewsTopicIds(item).includes(filter.id)).length}</small>
+          </button>
         ))}
+      </div>
+
+      <div className="archive-list">
+        {visibleItems.length ? visibleItems.map((item) => (
+          <NewsListItem item={item} state={itemStates[newsKey(item)]} onViewed={onViewed} onLiked={onLiked} t={t} key={newsKey(item)} />
+        )) : <p className="empty-note">No collected news in this topic yet.</p>}
       </div>
 
       {totalPages > 1 ? (
@@ -1106,7 +1241,7 @@ function ProfileHero({ profile, t }) {
     <header className="hero profile-hero">
       <div className="hero-copy">
         <p className="kicker">{profile.location}</p>
-        <h2>{profile.name}</h2>
+        <h1>{profile.name}</h1>
         <h3>{profile.title}</h3>
         <p>{profile.bio}</p>
         <div className="hero-actions">
@@ -1249,6 +1384,28 @@ function mergeExistingNewsItems(current, items) {
 
 function newsKey(item) {
   return item.link || `${item.source}-${item.title}`;
+}
+
+function getNewsTopicIds(item) {
+  const text = `${item.title ?? ''} ${item.summary ?? ''} ${item.source ?? ''}`.toLowerCase();
+  const topics = new Set();
+
+  if (text.includes('iphone') || text.includes('apple') || text.includes('ios')) topics.add('iphone');
+  if (text.includes('samsung') || text.includes('galaxy')) topics.add('samsung');
+  if (text.includes('pixel') || text.includes('google')) topics.add('pixel');
+  if (text.includes('tool') || text.includes('kit') || text.includes('diy') || text.includes('battery') || text.includes('screen')) topics.add('tools');
+  if (
+    text.includes('replacebase') ||
+    text.includes('rewa') ||
+    text.includes('idoctor') ||
+    text.includes('phone repair guru') ||
+    text.includes('diyphonefix') ||
+    text.includes('repair')
+  ) {
+    topics.add('peer');
+  }
+
+  return topics.size ? [...topics] : ['peer'];
 }
 
 function sortNewsHistory(items) {
