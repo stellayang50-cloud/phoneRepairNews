@@ -6,7 +6,7 @@ import { fetchRepairNews } from './lib/repairNews.mjs';
 //测试本机
 //2222
 //3333
-//git
+//github
 export default defineConfig({
   plugins: [
     react(),
